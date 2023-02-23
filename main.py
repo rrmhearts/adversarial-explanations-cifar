@@ -14,6 +14,9 @@ import torch
 import torch.utils.data.dataset
 import torchvision
 
+from dotenv import load_dotenv
+load_dotenv()
+
 ### Configuration settings
 # Training rate / size parameters
 TRAIN_BATCHSIZE = 128  # Multiplied by number of GPUs
@@ -64,6 +67,9 @@ if not cifar10_path.strip():
 class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog',
         'frog', 'horse', 'ship', 'truck']
 
+# Temp
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 ### Commandline functions
 
@@ -76,6 +82,10 @@ def main():
     if not os.path.lexists(cifar10_path):
         torchvision.datasets.CIFAR10(cifar10_path, download=True)
 
+@main.command()
+def empty():
+    print("Testing click and download CIFAR")
+    return True
 
 @main.command()
 @click.argument('path')
@@ -149,7 +159,7 @@ def calculate_ara(path, n_images, eps, steps, momentum):
         assert n == len(diffs)
 
         # Convert from perturbations to percentages
-        naive_guess = 1. / m.module.training_options['arch'][-1]
+        naive_guess = 1. / m.training_options['arch'][-1]
         diffs = torch.Tensor(diffs)
         bins = 1000
         diff_max = diffs.max().item()
@@ -525,6 +535,7 @@ def _get_dataset():
     aug_pad = 4
     aug_dim = 32 + aug_pad * 2
     ds_train = torchvision.datasets.CIFAR10(cifar10_path, train=True,
+            download=True,
             transform=T.Compose([
                 T.ToTensor(),
                 T.Lambda(lambda tensor:
@@ -611,7 +622,10 @@ def _model_save(path, m, training_options):
 
 
 def _model_load(path):
-    d = torch.load(path)
+    if torch.cuda.is_available():
+        d = torch.load(path)
+    else:
+        d = torch.load(path, map_location=torch.device('cpu'))
     m = model.Model(d['training_options'])
     m.load_state_dict(d['model_params'])
     return m
