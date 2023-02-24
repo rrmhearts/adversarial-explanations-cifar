@@ -123,7 +123,7 @@ def calculate_ara(path, n_images, eps, steps, momentum):
     if torch.cuda.device_count() > 0:
         device = torch.device('cuda')
         m = m.to(device)
-        m = torch.nn.DataParallel(m)
+        # m = torch.nn.DataParallel(m)
 
     m.eval()
 
@@ -273,7 +273,7 @@ def train(path, **training_options):
     if torch.cuda.device_count() > 0:
         device = torch.device('cuda')
         m = m.to(device)
-        m = torch.nn.DataParallel(m)
+        # m = torch.nn.DataParallel(m)
 
     # Training loop
     train_loader = torch.utils.data.DataLoader(ds_train, batch_size=batch_size,
@@ -510,10 +510,10 @@ def _adv_images(m, images, labels, opts):
         # Momentum helps when steps are high (450), hurts when steps are
         # low (45).  Difference is not necessarily significant, however.
         if opts.momentum > 0:
-            mom = mom.mul_(opts.momentum).add_(1 - opts.momentum, sdir)
+            mom = mom.mul_(opts.momentum).add_(sdir, alpha=1 - opts.momentum)
             sdir = mom.clone()
         sdir *= affected
-        deltas.data.add_(ss, sdir)
+        deltas.data.add_(sdir, alpha=ss)
 
     if opts.ensure_proper_minimization:
         if (first_ok_steps > opts.steps // 2).sum().item() != 0:

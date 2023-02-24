@@ -94,3 +94,15 @@ Training time varies greatly based on available GPU(s).  With both adversarial t
 
 At the top of the `main.py` file are many `CAPITAL_CASE` variables which may be modified to affect the training process.  Their definitions match those in the paper.
 
+### Errata
+`DataParallel` caused errors after updating `add_` to the latest PyTorch. The error is
+
+```
+  File "C:\Users\mccoppin\Documents\GitHub\adversarial-explanations-cifar\main.py", line 162, in calculate_ara
+    naive_guess = 1. / m.training_options['arch'][-1]
+  File "C:\Users\mccoppin\Documents\GitHub\adversarial-explanations-cifar\venv\lib\site-packages\torch\nn\modules\module.py", line 1269, in __getattr__  
+    raise AttributeError("'{}' object has no attribute '{}'".format(
+AttributeError: 'DataParallel' object has no attribute 'training_options'
+```
+
+Those lines concerning `DataParallel` have been commented out and are not needed in general. Two argument, `add_` has been changed from `x.add_(d, q)` to `x.add_(q, alpha=d)` in 3 locations.
